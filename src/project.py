@@ -1,6 +1,9 @@
 from lib import *
+from qiskit.quantum_info import Operator
+from qiskit.circuit.library import XGate, ZGate
+from math import sqrt
 
-n_logical = 2
+n_logical = 4
 n_ancilla = 2
 
 totalNum = 2*n_logical + n_ancilla
@@ -11,27 +14,50 @@ rangeAncilla = range(2*n_logical, totalNum)
 
 # n |+ > states that are needed to control the flipping of n qubits
 # there are n logic qubits and n/3 logical qubits
-circuit = QuantumCircuit(totalNum, totalNum)
+circuit = QuantumCircuit(totalNum, n_logical+n_ancilla)
 
+# ----------- message encoding ---------------------
 
-# -----------. state preparation -----------------
+# message to be transmitted is |00>_L 
+for i in rangeLogical:
+    circuit.initialize([1,0], i)
 
+# encode message as per [[4,2,2]] detection code logical space definition
+# TODO calculate equivalent matrix for the logical space
+# |0000>  becomes 1/sqrt(2) |0000>+|1111>
+# |0100>  becomes 1/sqrt(2) |0110>+|1001>
+# |1000>  becomes 1/sqrt(2) |1010>+|0101>
+# |1100>  becomes 1/sqrt(2) |1100>+|0011>
+baseSet = [0 for i in range(16)]
+print(baseSet)
+def getBaseState(i):
+    s = list(baseSet)
+    s[i] = 1
+    return Statevector(s)
+def getBellState(i1, i2):
+    s = list(baseSet)
+    s[i1] = 1/sqrt(2)
+    s[i2] = 1/sqrt(2)
+    return Statevector(s)
+
+# TODO getBaseState(0) * getBellState(0, 15).conjugate()
+
+# ----------- state preparation (apply error) -----------------
 
 #apply n haddamard gates
 for i in rangeErrorGen:
     circuit.h(i)
 
 #measure the |+> states
-for i in range(n_logical):
+for i in rangeErrorGen:
     circuit.measure(i,i)
 
 #flip the bit conditionally to the first n bits
-for i in range(n_logical):
+for i in rangeErrorGen:
     circuit.x(i+n_logical).c_if(circuit.cregs[0][i], 1)
 
-#------- after that the first n qubits are useless and the state is prepared in the second n bit.
+#------- after that the first qubits are useless and the state is prepared in the second n bit.
 # ------ in these n bits there is the state En (qubits with error), now it's time to apply the error correction
-
 
 ##------- error correction---------
 
@@ -45,13 +71,13 @@ for i in rangeLogical:
 for i in rangeLogical:
     circuit.cz(ancilla_idx+1, i)
 
+for i in rangeAncilla:
+    circuit.h(i)
+
 #----------------- measure -----------------------------------
 
-# reset the classical register 
-# circuit.cregs[0]
-
 # measure the ancilla, save in the first bits of classical register
-idxBit = 0
+idxBit = 2
 for i in rangeAncilla:
     circuit.measure(i, idxBit)
     idxBit += 1
@@ -68,7 +94,7 @@ result = backend.run(new_circuit, shots=shots).result()
 
 print(result.get_counts())
 
-plot_histogram(result.get_counts(circuit))
+plot_histogram(result.get_counts(circuit), title=f"Ancilla results shots={shots}")
 plt.show(block=False)
 
 input()
