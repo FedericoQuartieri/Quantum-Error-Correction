@@ -35,8 +35,9 @@ def back(prov):
 
 
 def show_circuit(circuit : QuantumCircuit):
-    circuit.draw(output='mpl', style={'backgroundcolor': '#EEEEEE'}, fold=80)
+    circuit.draw(output='mpl', style={'backgroundcolor': '#EEEEEE', 'fontsize' : 8, 'subfontsize' : 5}, fold=80)
     wm = plt.get_current_fig_manager()
+    plt.tight_layout()
     wm.window.setGeometry(0, 0, 1450, 230)
     plt.show(block=False)
     print(circuit)
@@ -62,6 +63,7 @@ def show_histo(circuit, backend, shots):
     result = backend.run(new_circuit, shots=shots).result()
     counts = result.get_counts()
     plot_histogram(counts)
+    plt.tight_layout()
     plt.show(block=False)
     input()
 

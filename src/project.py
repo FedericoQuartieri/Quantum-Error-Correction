@@ -46,13 +46,23 @@ circuit.barrier(range(totalNum), label="Error Correction")
 for i in rangeAncilla:
     circuit.h(i)
 
+x4_gate = QuantumCircuit(n_logical)
+for i in range(n_logical):
+    x4_gate.x(i)
+x4_gate = x4_gate.to_gate(label="X").control(1)
+
 ancilla_idx = 2*n_logical
+qbitlist = list(rangeLogical)
+qbitlist.insert(0, ancilla_idx)
+circuit.append(x4_gate, qbitlist)
 
-for i in rangeLogical:
-    circuit.cx(ancilla_idx, i)
 
-for i in rangeLogical:
-    circuit.cz(ancilla_idx+1, i)
+z4_gate = QuantumCircuit(n_logical)
+for i in range(n_logical):
+    z4_gate.x(i)
+z4_gate = z4_gate.to_gate(label="Z").control(1)
+qbitlist[0] = ancilla_idx+1
+circuit.append(z4_gate, qbitlist)
 
 for i in rangeAncilla:
     circuit.h(i)
@@ -60,11 +70,10 @@ for i in rangeAncilla:
 #----------------- measure -----------------------------------
 
 # measure the ancilla, save in the first bits of classical register
-idxBit = n_logical
+idxBit = 0
 for i in rangeAncilla:
-    circuit.measure(i, idxBit)
+    circuit.measure(i, ancCReg[idxBit])
     idxBit += 1
-
 
 #------------------- simulate ------------------------------
 
@@ -78,6 +87,7 @@ result = backend.run(new_circuit, shots=shots).result()
 print(result.get_counts())
 
 plot_histogram(result.get_counts(circuit), title=f"Ancilla results shots={shots}")
+plt.tight_layout()
 plt.show(block=False)
 
 input()
