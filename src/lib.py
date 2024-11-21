@@ -34,8 +34,8 @@ def back(prov):
 #simulatora=['ibmq_qasm_simulator', 'simulator_mps', 'simulator_statevector', 'simulator_extended_stabilizer', 'simulator_stabilizer']
 
 
-def show_circuit(circuit):
-    circuit.draw(output='mpl', style={'backgroundcolor': '#EEEEEE'})
+def show_circuit(circuit : QuantumCircuit):
+    circuit.draw(output='mpl', style={'backgroundcolor': '#EEEEEE'}, fold=80)
     wm = plt.get_current_fig_manager()
     wm.window.setGeometry(0, 0, 1450, 230)
     plt.show(block=False)
@@ -43,7 +43,7 @@ def show_circuit(circuit):
     input()
 
 
-def show_bloch(circuit):
+def show_bloch(circuit : QuantumCircuit):
     backend = Aer.get_backend('statevector_simulator')
     new_circuit = transpile(circuit, backend)
     result = backend.run(new_circuit).result()
@@ -57,9 +57,9 @@ def show_bloch(circuit):
     return statevector
 
 
-def show_histo(circuit, backend, shts):
-    new_circuit = transpile(circuit, backend, shts)
-    result = backend.run(new_circuit).result()
+def show_histo(circuit, backend, shots):
+    new_circuit = transpile(circuit, backend, shots)
+    result = backend.run(new_circuit, shots=shots).result()
     counts = result.get_counts()
     plot_histogram(counts)
     plt.show(block=False)

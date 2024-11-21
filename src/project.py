@@ -1,6 +1,8 @@
 from lib import *
+from circuits import *
 from qiskit.quantum_info import Operator
-from qiskit.circuit.library import XGate, ZGate
+from qiskit.circuit.controlledgate import ControlledGate
+from qiskit.circuit.library.standard_gates import XGate, ZGate
 from numpy import sqrt, matrix
 
 n_logical = 4
@@ -8,68 +10,44 @@ n_ancilla = 2
 
 totalNum = 2*n_logical + n_ancilla
 
-rangeErrorGen = range(n_logical)
 rangeLogical = range(n_logical, 2*n_logical)
 rangeAncilla = range(2*n_logical, totalNum)
 
 # n |+ > states that are needed to control the flipping of n qubits
 # there are n logic qubits and n/3 logical qubits
-circuit = QuantumCircuit(totalNum, n_logical+n_ancilla)
+errReg = QuantumRegister(n_logical, "E")
+logReg = QuantumRegister(n_logical, "L")
+ancillaReg = QuantumRegister(n_ancilla, "A")
+errCReg_x = ClassicalRegister(n_logical, "eX")
+errCReg_z = ClassicalRegister(n_logical, "eZ")
+ancCReg = ClassicalRegister(n_ancilla, "cA")
+circuit = QuantumCircuit(errReg, logReg, ancillaReg, errCReg_x, errCReg_z, ancCReg)
 
 # ----------- message encoding ---------------------
-
-# message to be transmitted is |00>_L 
-for i in rangeLogical:
-    circuit.initialize([1,0], i)
+circuit.barrier(range(totalNum), label="Encoder")
 
 # encoder by definition for [[4,2,2]] codespace
-circuit.cx(n_logical, n_logical+2)
-circuit.cx(n_logical+1, n_logical+2)
-circuit.h(n_logical+3)
-circuit.cx(n_logical+3, n_logical+2)
-circuit.cx(n_logical+3, n_logical+1)
-circuit.cx(n_logical+3, n_logical)
+encoder = encoder_as_gate(n_logical)
+circuit.append(encoder, logReg)
 
-
-circuit.barrier(range(totalNum), label="Encoder")
 # ----------- state preparation (apply error) -----------------
 
-#apply n haddamard gates
-for i in rangeErrorGen:
-    circuit.h(i)
+circuit.barrier(range(totalNum), label="X-Error")
+append_error_correction_x(circuit, n_logical)
+circuit.barrier(range(totalNum), label="Z-Error")
+append_error_correction_z(circuit, n_logical)
 
-#measure the |+> states
-for i in rangeErrorGen:
-    circuit.measure(i,i)
+# ------- after that the first qubits are useless and the state is prepared in the second n bit.
+# ------- in these n bits there is the state En (qubits with error), now it's time to apply the error correction
 
-#flip the bit conditionally to the first n bits
-for i in rangeErrorGen:
-    circuit.x(i+n_logical).c_if(circuit.cregs[0][i], 1)
-
-#------- after that the first qubits are useless and the state is prepared in the second n bit.
-# ------ in these n bits there is the state En (qubits with error), now it's time to apply the error correction
-
-circuit.barrier(range(totalNum))
-
-#apply n haddamard gates
-for i in rangeErrorGen:
-    circuit.h(i)
-
-#measure the |+> states
-for i in rangeErrorGen:
-    circuit.measure(i,i)
-
-#flip the bit conditionally to the first n bits
-for i in rangeErrorGen:
-    circuit.z(i+n_logical).c_if(circuit.cregs[0][i], 1)
-
-circuit.barrier(range(totalNum))
-##------- error correction---------
+# -------------- error correction ------------------------
+circuit.barrier(range(totalNum), label="Error Correction")
 
 for i in rangeAncilla:
     circuit.h(i)
 
 ancilla_idx = 2*n_logical
+
 for i in rangeLogical:
     circuit.cx(ancilla_idx, i)
 
