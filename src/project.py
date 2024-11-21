@@ -31,7 +31,7 @@ circuit.cx(n_logical+3, n_logical+1)
 circuit.cx(n_logical+3, n_logical)
 
 
-circuit.barrier(range(totalNum))
+circuit.barrier(range(totalNum), label="Encoder")
 # ----------- state preparation (apply error) -----------------
 
 #apply n haddamard gates
@@ -48,6 +48,20 @@ for i in rangeErrorGen:
 
 #------- after that the first qubits are useless and the state is prepared in the second n bit.
 # ------ in these n bits there is the state En (qubits with error), now it's time to apply the error correction
+
+circuit.barrier(range(totalNum))
+
+#apply n haddamard gates
+for i in rangeErrorGen:
+    circuit.h(i)
+
+#measure the |+> states
+for i in rangeErrorGen:
+    circuit.measure(i,i)
+
+#flip the bit conditionally to the first n bits
+for i in rangeErrorGen:
+    circuit.z(i+n_logical).c_if(circuit.cregs[0][i], 1)
 
 circuit.barrier(range(totalNum))
 ##------- error correction---------
