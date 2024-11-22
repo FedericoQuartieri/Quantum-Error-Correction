@@ -1,13 +1,12 @@
 from lib import *
 from circuits import *
+from qiskit.circuit.library import UnitaryGate
 from qiskit.quantum_info import Operator
-from qiskit.circuit.controlledgate import ControlledGate
-from qiskit.circuit.library.standard_gates import XGate, ZGate
 from numpy import sqrt, matrix
 
 n_logical = 4   
 n_ancilla = 2
-n_max_errors_per_axes = 1
+n_max_errors_per_axes = 2
 
 totalNum = n_max_errors_per_axes + n_logical + n_ancilla
 
@@ -31,7 +30,6 @@ circuit = QuantumCircuit(errReg, logReg, ancillaReg, errCReg_x, errCReg_z, ancCR
 encoder = encoder_as_gate(n_logical)
 circuit.append(encoder, logReg)
 
-
 print_statevector(circuit)
 
 # ----------- state preparation (apply error) -----------------
@@ -45,29 +43,19 @@ append_error_z(circuit, n_max_errors_per_axes)
 # ------- in these n bits there is the state En (qubits with error), now it's time to apply the error correction
 
 # -------------- error detection ------------------------
-circuit.barrier(range(totalNum), label="Error Detection")
-
-for i in rangeAncilla:
-    circuit.h(i)
-
 ancilla_idx = n_max_errors_per_axes + n_logical
 
 circuit.barrier(range(totalNum), label="Detect X-Flip")
-# ancilla[0] will detect X errors
 for i in rangeLogical:
-    circuit.cz(ancilla_idx, i)
-    
+    circuit.cx(i, ancilla_idx)
+
 circuit.barrier(range(totalNum), label="Detect Z-Flip")
-# ancilla[1] will detect Z errors
 for i in rangeLogical:
-    circuit.cx(ancilla_idx+1, i)
-
-circuit.barrier(range(totalNum), label="Finalize-Measure")
-
-for i in rangeAncilla:
-    circuit.h(i)
+    circuit.append(CNOT_H_basis_control(), [i, ancilla_idx+1])
+    
 
 #----------------- measure -----------------------------------
+circuit.barrier(range(totalNum), label="Measure")
 
 # measure the ancilla, save in the first bits of classical register
 idxBit = 0
