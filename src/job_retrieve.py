@@ -1,5 +1,6 @@
 from qiskit_ibm_runtime import QiskitRuntimeService
 from lib import *
+from qiskit.primitives import BitArray
 import matplotlib.pyplot as plt
 
 service = QiskitRuntimeService(
@@ -7,19 +8,21 @@ service = QiskitRuntimeService(
     instance='ibm-q/open/main',
     token=my_token
 )
-job = service.job('cx0e2gapjw300085ssj0')
-result = job.result()
+job = service.job('cx0gjxvpx23g008j8vj0')
+if not job.done():
+    print("Status = " + job.status())
+    exit(-1)
+result = job.result()[0].data
 
-print(result.get_counts())
+bitReg = [arr for key,arr in result.items()]
+concatBitReg = BitArray.concatenate_bits(bitReg)
 
-plot_histogram(result.get_counts(), title=f"Results")
+print(concatBitReg)
+print(concatBitReg.get_counts())
+
+shots = concatBitReg.num_shots
+counts = concatBitReg.get_counts()
+
+plot_histogram(counts, title=f"Ancilla results shots={shots}")
 plt.tight_layout()
-plt.show(block=False)
-input()
-
-# To get counts for a particular pub result, use 
-#
-# pub_result = job_result[<idx>].data.<classical register>.get_counts()
-#
-# where <idx> is the index of the pub and <classical register> is the name of the classical register. 
-# You can use circuit.cregs to find the name of the classical registers.
+plt.show()

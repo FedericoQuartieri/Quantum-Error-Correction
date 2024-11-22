@@ -1,21 +1,19 @@
 from lib import *
 from circuits import *
-from qiskit.circuit.library import UnitaryGate
-from qiskit.quantum_info import Operator
+from qiskit.primitives import BitArray
 from qiskit_ibm_runtime import SamplerV2 as Sampler
-from numpy import sqrt, matrix
 from time import sleep
 
 n_logical = 4   
 n_ancilla = 2
-n_max_errors_per_axes = 2
+n_max_errors_per_axes = 1
 
 totalNum = n_max_errors_per_axes + n_logical + n_ancilla
 
 rangeLogical = range(n_max_errors_per_axes, n_max_errors_per_axes + n_logical)
 rangeAncilla = range(n_max_errors_per_axes + n_logical, totalNum)
 
-# n |+ > states that are needed to control the flipping of n qubits
+# n |+> states that are needed to control the flipping of n qubits
 
 errReg = QuantumRegister(n_max_errors_per_axes, "E")
 logReg = QuantumRegister(n_logical, "L")
@@ -32,7 +30,7 @@ circuit = QuantumCircuit(errReg, logReg, ancillaReg, errCReg_x, errCReg_z, ancCR
 encoder = encoder_as_gate(n_logical)
 circuit.append(encoder, logReg)
 
-print_statevector(circuit)
+# print_statevector(circuit)
 
 # ----------- state preparation (apply error) -----------------
 
@@ -69,12 +67,15 @@ for i in rangeAncilla:
 
 show_circuit(circuit)
 
-if my_token is None:
+choice = input("Run on Quantum Hardware? y/n   ")
+if my_token is None or choice != 'y':
+    print("Running on Simulator...")
     backend = back('simulator')
 else: 
+    print("Sending Job to IBM...")
     backend = back('real')
 
-shots = 1000
+shots = 10000
 new_circuit = transpile(circuit, backend)
 
 if my_token is None:
@@ -87,11 +88,14 @@ else:
         print(str(i*10) + ": " + job.status())
         sleep(10)
         i += 1
-    result = job.result()
+
+    result = job.result()[0].data
+    bitReg = [arr for key,arr in result.items()]
+    result = BitArray.concatenate_bits(bitReg)
 
 print(result.get_counts())
 
-plot_histogram(result.get_counts(circuit), title=f"Ancilla results shots={shots}")
+plot_histogram(result.get_counts(), title=f"Ancilla results shots={shots}")
 plt.tight_layout()
 plt.show(block=False)
 
