@@ -2,7 +2,9 @@ from lib import *
 from circuits import *
 from qiskit.circuit.library import UnitaryGate
 from qiskit.quantum_info import Operator
+from qiskit_ibm_runtime import SamplerV2 as Sampler
 from numpy import sqrt, matrix
+from time import sleep
 
 n_logical = 4   
 n_ancilla = 2
@@ -67,10 +69,25 @@ for i in rangeAncilla:
 
 show_circuit(circuit)
 
-backend = back('simulator')
-shots = 100000
+if my_token is None:
+    backend = back('simulator')
+else: 
+    backend = back('real')
+
+shots = 1000
 new_circuit = transpile(circuit, backend)
-result = backend.run(new_circuit, shots=shots).result()
+
+if my_token is None:
+    result = backend.run(new_circuit, shots=shots).result()
+else:
+    sampler = Sampler(backend)
+    job = sampler.run([new_circuit], shots=shots)
+    i = 0
+    while not job.done():
+        print(str(i*10) + ": " + job.status())
+        sleep(10)
+        i += 1
+    result = job.result()
 
 print(result.get_counts())
 
