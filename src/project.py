@@ -25,7 +25,7 @@ ancCReg = ClassicalRegister(n_ancilla, "cA")
 circuit = QuantumCircuit(errReg, logReg, ancillaReg, errCReg_x, errCReg_z, ancCReg)
 
 # ----------- message encoding ---------------------
-circuit.barrier(range(totalNum), label="Encoder")
+# circuit.barrier(range(totalNum), label="Encoder")
 
 # encoder by definition for [[4,2,2]] codespace
 encoder = encoder_as_gate(n_logical)
@@ -50,24 +50,19 @@ circuit.barrier(range(totalNum), label="Error Detection")
 for i in rangeAncilla:
     circuit.h(i)
 
-#add 4 x gate
-x4_gate = QuantumCircuit(n_logical)
-for i in range(n_logical):
-    x4_gate.x(i)
-x4_gate = x4_gate.to_gate(label="X").control(1)
-
 ancilla_idx = n_max_errors_per_axes + n_logical
-qbitlist = list(rangeLogical)
-qbitlist.insert(0, ancilla_idx)
-circuit.append(x4_gate, qbitlist)
 
-#add 4 z gate
-z4_gate = QuantumCircuit(n_logical)
-for i in range(n_logical):
-    z4_gate.x(i)
-z4_gate = z4_gate.to_gate(label="Z").control(1)
-qbitlist[0] = ancilla_idx+1
-circuit.append(z4_gate, qbitlist)
+circuit.barrier(range(totalNum), label="Detect X-Flip")
+# ancilla[0] will detect X errors
+for i in rangeLogical:
+    circuit.cz(ancilla_idx, i)
+    
+circuit.barrier(range(totalNum), label="Detect Z-Flip")
+# ancilla[1] will detect Z errors
+for i in rangeLogical:
+    circuit.cx(ancilla_idx+1, i)
+
+circuit.barrier(range(totalNum), label="Finalize-Measure")
 
 for i in rangeAncilla:
     circuit.h(i)
@@ -85,7 +80,7 @@ for i in rangeAncilla:
 show_circuit(circuit)
 
 backend = back('simulator')
-shots = 10000
+shots = 100000
 new_circuit = transpile(circuit, backend)
 result = backend.run(new_circuit, shots=shots).result()
 

@@ -35,7 +35,7 @@ def back(prov):
 
 
 def show_circuit(circuit : QuantumCircuit):
-    circuit.draw(output='mpl', style={'backgroundcolor': '#EEEEEE', 'fontsize' : 8, 'subfontsize' : 5}, fold=80)
+    circuit.draw(output='mpl', style={'backgroundcolor': '#EEEEEE', 'fontsize' : 8, 'subfontsize' : 6}, fold=80)
     wm = plt.get_current_fig_manager()
     plt.tight_layout()
     wm.window.setGeometry(0, 0, 1450, 230)

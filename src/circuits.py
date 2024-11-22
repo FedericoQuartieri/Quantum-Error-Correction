@@ -11,8 +11,8 @@ def encoder_as_gate(n_base : int):
 
     return circuit.to_gate(label="Encoder")
 
-def append_error_x(circuit : QuantumCircuit, n_logical : int):
-    rangeErrorGen = range(n_logical)
+def append_error_x(circuit : QuantumCircuit, n_max_errors : int):
+    rangeErrorGen = range(n_max_errors)
     #apply n haddamard gates
     for i in rangeErrorGen:
         circuit.h(i)
@@ -23,22 +23,45 @@ def append_error_x(circuit : QuantumCircuit, n_logical : int):
 
     #flip the bit conditionally to the first n bits
     for i in rangeErrorGen:
-        circuit.x(i+n_logical).c_if(circuit.cregs[0][i], 1)
+        circuit.x(i+n_max_errors).c_if(circuit.cregs[0][i], 1)
 
 
-def append_error_z(circuit : QuantumCircuit, n_logical : int):
-    rangeErrorGen = range(n_logical)
+def append_error_z(circuit : QuantumCircuit, n_max_errors : int):
+    rangeErrorGen = range(n_max_errors)
     #apply n hadamard gates
     for i in rangeErrorGen:
         circuit.h(i)
 
     #measure the |+> states
     for i in rangeErrorGen:
-        circuit.measure(i,i+n_logical)
+        circuit.measure(i,i+n_max_errors)
 
     #flip the bit conditionally to the first n bits
     for i in rangeErrorGen:
-        circuit.z(i+n_logical).c_if(circuit.cregs[1][i], 1)
+        circuit.z(i+n_max_errors).c_if(circuit.cregs[1][i], 1)
 
     #------- after that the first qubits are useless and the state is prepared in the second n_logical qubits.
     # ------ in these n bits there is the state En (qubits with error), now it's time to apply the error correction
+
+
+
+
+# Dump for x4 z4 gates
+
+#add 4 x gate (doesn't work, why?)
+# x4_gate = QuantumCircuit(n_logical)
+# for i in range(n_logical):
+#     x4_gate.x(i)
+# x4_gate = x4_gate.to_gate(label="X").control(1)
+
+# qbitlist = list(rangeLogical)
+# qbitlist.insert(0, ancilla_idx)
+# circuit.append(x4_gate, qbitlist)
+
+#  add 4 z gate (doesn't work, why?)
+# z4_gate = QuantumCircuit(n_logical)
+# for i in range(n_logical):
+#     z4_gate.x(i)
+# z4_gate = z4_gate.to_gate(label="Z").control(1)
+# qbitlist[0] = ancilla_idx+1
+# circuit.append(z4_gate, qbitlist)
