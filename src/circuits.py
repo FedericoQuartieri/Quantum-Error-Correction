@@ -11,7 +11,7 @@ def encoder_as_gate(n_base : int):
 
     return circuit.to_gate(label="Encoder")
 
-def append_error_correction_x(circuit : QuantumCircuit, n_logical : int):
+def append_error_x(circuit : QuantumCircuit, n_logical : int):
     rangeErrorGen = range(n_logical)
     #apply n haddamard gates
     for i in rangeErrorGen:
@@ -26,7 +26,7 @@ def append_error_correction_x(circuit : QuantumCircuit, n_logical : int):
         circuit.x(i+n_logical).c_if(circuit.cregs[0][i], 1)
 
 
-def append_error_correction_z(circuit : QuantumCircuit, n_logical : int):
+def append_error_z(circuit : QuantumCircuit, n_logical : int):
     rangeErrorGen = range(n_logical)
     #apply n hadamard gates
     for i in rangeErrorGen:
