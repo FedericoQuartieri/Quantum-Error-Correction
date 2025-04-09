@@ -6,7 +6,7 @@ from time import sleep
 
 n_logical = 4   
 n_ancilla = 2
-n_max_errors_per_axes = 1
+n_max_errors_per_axes = 2
 
 totalNum = n_max_errors_per_axes + n_logical + n_ancilla
 
@@ -68,12 +68,16 @@ for i in rangeAncilla:
 show_circuit(circuit)
 
 choice = input("Run on Quantum Hardware? y/n   ")
-if my_token is None or choice != 'y':
+if my_token is None:
+    print ("You did not set the token, Running on Simulator...")
+    backend = back('simulator')
+elif choice != 'y':
     print("Running on Simulator...")
     backend = back('simulator')
 else: 
     print("Sending Job to IBM...")
     backend = back('real')
+
 
 shots = 10000
 new_circuit = transpile(circuit, backend)
@@ -85,7 +89,7 @@ else:
     job = sampler.run([new_circuit], shots=shots)
     i = 0
     while not job.done():
-        print(str(i*10) + ": " + job.status())
+        print(str(i*10) + ": " + str(job.status()))
         sleep(10)
         i += 1
 

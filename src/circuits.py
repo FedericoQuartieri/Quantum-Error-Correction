@@ -57,3 +57,35 @@ def CNOT_H_basis_control():
     o4 = minusOne*minusOne.transpose()
     # This gate applies X gate to target if control is |+>
     return UnitaryGate(o1+o2+o3+o4, label="CNOT_H-Basis")
+
+
+#instead of CNOT_H_basis_control
+def my_gate():
+    cz_matrix = np.array([
+        [0.5, -0.5, 0.5, 0.5],
+        [-0.5, 0.5, 0.5, 0.5],
+        [0.5, 0.5, 0.5, -0.5],
+        [0.5, 0.5, -0.5, 0.5]
+    ])
+    return UnitaryGate(cz_matrix, label="MyGate")
+
+
+# Dump for x4 z4 gates
+
+#add 4 x gate (doesn't work, why?)
+# x4_gate = QuantumCircuit(n_logical)
+# for i in range(n_logical):
+#     x4_gate.x(i)
+# x4_gate = x4_gate.to_gate(label="X").control(1)
+
+# qbitlist = list(rangeLogical)
+# qbitlist.insert(0, ancilla_idx)
+# circuit.append(x4_gate, qbitlist)
+
+#  add 4 z gate (doesn't work, why?)
+# z4_gate = QuantumCircuit(n_logical)
+# for i in range(n_logical):
+#     z4_gate.x(i)
+# z4_gate = z4_gate.to_gate(label="Z").control(1)
+# qbitlist[0] = ancilla_idx+1
+# circuit.append(z4_gate, qbitlist)
